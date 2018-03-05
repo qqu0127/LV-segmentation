@@ -7,7 +7,7 @@ from itertools import izip
 from utils import center_crop, lr_poly_decay, get_SAX_SERIES
 
 SAX_SERIES = get_SAX_SERIES()
-SUNNYBROOK_ROOT_PATH = '../Medical-Image-Analysis/Data/'
+SUNNYBROOK_ROOT_PATH = '../Data/'
 TEST_CONTOUR_PATH = os.path.join(SUNNYBROOK_ROOT_PATH,
                             'Sunnybrook Cardiac MR Database ContoursPart1',
                             'OnlineDataContours')
