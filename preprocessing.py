@@ -22,6 +22,7 @@ TRAIN_CONTOUR_PATH = os.path.join(SUNNYBROOK_ROOT_PATH,
                             'TrainingDataContours')
 TRAIN_IMG_PATH = os.path.join(SUNNYBROOK_ROOT_PATH,
                         'challenge_training')
+SIZE = 256
 
 def shrink_case(case):
     toks = case.split('-')
@@ -76,23 +77,22 @@ def map_all_contours(contour_path, shuffle=False):
     return contours
 
 
-def export_all_contours(contours, data_path, crop_size):
+def export_all_contours(contours, data_path):
     print('\nProcessing {:d} images and labels ...\n'.format(len(contours)))
-    images = np.zeros((len(contours), crop_size, crop_size, 1))
-    masks = np.zeros((len(contours), crop_size, crop_size, 1))
+    images = np.zeros((len(contours), SIZE, SIZE, 1))
+    masks = np.zeros((len(contours), SIZE, SIZE, 1))
     for idx, contour in enumerate(contours):
         img, mask = read_contour(contour, data_path)
-        img = center_crop(img, crop_size=crop_size)
-        mask = center_crop(mask, crop_size=crop_size)
+        if img.shape[0] > SIZE:
+            img = center_crop(img, SIZE)
+            mask = center_crop(mask, SIZE)
         images[idx] = img
         masks[idx] = mask
 
     return images, masks
 
-def prepareDataset(contour_path, img_path, crop_size):
+def prepareDataset(contour_path, img_path):
     contours = map_all_contours(contour_path)
-    img, mask = export_all_contours(contours,
-                                            img_path,  
-                                            crop_size=crop_size)
+    img, mask = export_all_contours(contours, img_path)
     return img, mask
     
