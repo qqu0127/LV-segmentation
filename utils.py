@@ -3,7 +3,7 @@
 import numpy as np
 import cv2
 from keras import backend as K
-
+import os
 
 def get_SAX_SERIES():
     SAX_SERIES = {}
@@ -106,5 +106,3 @@ def jaccard_coef(y_true, y_pred):
     union = np.sum(y_true, axis=None) + np.sum(y_pred, axis=None) - intersection
 
     return float(intersection) / float(union)
-
-

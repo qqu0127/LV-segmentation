@@ -95,4 +95,28 @@ def prepareDataset(contour_path, img_path):
     contours = map_all_contours(contour_path)
     img, mask = export_all_contours(contours, img_path)
     return img, mask
+
+def get_ROI(contour_path, shape_out = 32, img_size = 256):
+    contours = [os.path.join(dirpath, f)
+        for dirpath, dirnames, files in os.walk(contour_path)
+        for f in fnmatch.filter(files,
+                        'IM-0001-*-icontour-manual.txt')]
+    ROI = []
+    for path in contours:
+        c = []
+        file = open(path, 'r')
+        for line in file:
+            c.append(tuple(map(float, line.split())))
+        c = np.array(c)
+        X_min, Y_min = c[:,0].min(), c[:,1].min()
+        X_max, Y_max = c[:,0].max(), c[:,1].max()  
+        w = X_max - X_min
+        h = Y_max - Y_min
+        roi_single = np.zeros((img_size, img_size))
+        if w > h :
+            roi_single[int(Y_min - (w -h)/2):int(Y_max + (w -h)/2), int(X_min):int(X_max)] = 1.0
+        else :
+            roi_single[int(Y_min):int(Y_max), int(X_min - (h-w)/2):int(X_max + (h -w)/2)] = 1.0
+        ROI.append(cv2.resize(roi_single, (shape_out, shape_out), interpolation = cv2.INTER_NEAREST))
+    return ROI
     
