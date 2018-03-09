@@ -164,14 +164,23 @@ def get_cropped(img, y_pred, roi_size = 32, win_size = 100):
     cropped = np.zeros((n, win_size, win_size, 1))
     for i in range(y_pred.shape[0]):
         pred = y_pred[i, 0, :,:]
-        region = np.array(np.where(pred > 0.5))
-        [x_median, y_median] = np.median(region, axis=1)
-        x_median *= 256 / roi_size
-        y_median *= 256 / roi_size
-        x_min = int(max(0, x_median - win_size / 2))
-        y_min = int(max(0, y_median - win_size / 2))
-        x_max = x_min + win_size
-        y_max = y_min + win_size
+        [x_min, x_max, y_min, y_max] = get_bbox_single(pred)
         cropped[i, :, :, 0] = img[i, x_min:x_max, y_min:y_max, 0]
     return cropped
+
+def get_bbox_single(pred, roi_size = 32, win_size = 100):
+    '''
+        Compute the bounding box param of the given binary region mask
+        This implementation compute the median of x, y as the middle point.
+    '''
+    ind = np.array(np.where(pred > 0.5))
+    [x_median, y_median] = np.median(region, axis=1)
+    x_median *= 256 / roi_size
+    y_median *= 256 / roi_size
+    x_min = int(max(0, x_median - win_size / 2))
+    y_min = int(max(0, y_median - win_size / 2))
+    x_max = x_min + win_size
+    y_max = y_min + win_size
+    return [x_min, x_max, y_min, y_max]
+
     
