@@ -96,7 +96,36 @@ def prepareDataset(contour_path, img_path):
     img, mask = export_all_contours(contours, img_path)
     return img, mask
 
+def reformDataXY(img, ROI, img_size = 64,  mask_size = 32):
+    '''
+        Reform the image data and ROI for model
+        @param:
+            img: the original image, shape (N, 256, 256, 1)
+            ROI: the bounding box of region of interest, shape (N, mask_size, mask_size)
+            img_size: size image used for the model, default 64
+            mask_size: size of mask used for the model, default 32
+        @return:
+            X: the reformed data field, shape (N, img_size, img_size, 1)
+            Y: the reformed ground truth, shape (N, 1, mask_size, mask_size)
+    '''
+    X = np.zeros((img.shape[0], img_size, img_size, 1))
+    for i in range(X.shape[0]):
+        X[i,:,:,0] = cv2.resize(img[i,:,:,0], (img_size, img_size), interpolation = cv2.INTER_LINEAR)
+    Y = np.array(ROI).reshape((len(ROI),1, mask_size, mask_size))
+    return X, Y
+
+
+
 def get_ROI(contour_path, shape_out = 32, img_size = 256):
+    '''
+        Given the path to the mask, return ROI -- the bounding box with size shape_out
+        @param
+            countour_path: the path to the mask dir
+            shape_out: the size of bounding box, default 32
+            img_size: original size of image, default 256
+        @return
+            ROI: the bounding box computed based on ground truth
+    '''
     contours = [os.path.join(dirpath, f)
         for dirpath, dirnames, files in os.walk(contour_path)
         for f in fnmatch.filter(files,
@@ -119,4 +148,30 @@ def get_ROI(contour_path, shape_out = 32, img_size = 256):
             roi_single[int(Y_min):int(Y_max), int(X_min - (h-w)/2):int(X_max + (h -w)/2)] = 1.0
         ROI.append(cv2.resize(roi_single, (shape_out, shape_out), interpolation = cv2.INTER_NEAREST))
     return ROI
+
+def get_cropped(img, y_pred, roi_size = 32, win_size = 100):
+    '''
+        Cropped the original image using CNN prediction
+        @param:
+            img: the original image, shape (N, WIDTH, HEIGHT, 1), default size 256
+            y_pred: the prediction of ROI, may be showed as scatter binary image, shape (N, 1, roi_size, roi_size)
+            roi_size: the size of y_pred, default 32
+            win_size: the size of window used to crop the original image, default 100
+        @return
+            cropped: the cropped image, same format with input img, but with smaller size of win_size
+    '''
+    n = img.shape[0]
+    cropped = np.zeros((n, win_size, win_size, 1))
+    for i in range(y_pred.shape[0]):
+        pred = y_pred[i, 0, :,:]
+        region = np.array(np.where(pred > 0.5))
+        [x_median, y_median] = np.median(region, axis=1)
+        x_median *= 256 / roi_size
+        y_median *= 256 / roi_size
+        x_min = int(max(0, x_median - win_size / 2))
+        y_min = int(max(0, y_median - win_size / 2))
+        x_max = x_min + win_size
+        y_max = y_min + win_size
+        cropped[i, :, :, 0] = img[i, x_min:x_max, y_min:y_max, 0]
+    return cropped
     
