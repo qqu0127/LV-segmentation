@@ -4,6 +4,9 @@ import numpy as np
 import cv2
 from keras import backend as K
 import os
+from sklearn.metrics import confusion_matrix
+import itertools
+
 
 def get_SAX_SERIES():
     SAX_SERIES = {}
@@ -106,3 +109,59 @@ def jaccard_coef(y_true, y_pred):
     union = np.sum(y_true, axis=None) + np.sum(y_pred, axis=None) - intersection
 
     return float(intersection) / float(union)
+
+
+def get_confusion_matrix_bbox(mask, pred):
+    '''
+        Using confusion matrix to evaluate the performance of cropping
+        For each mask - pred pair, compute the bbox of pred, regard mask as ground truth, bbox as prediction,
+        apply confusion matrix metrics. After that, average over all confusion matrix.
+    '''
+    pred_box = np.zeros((mask.shape))
+    n = mask.shape[0]
+    for i in range(n):
+        [x_min, x_max, y_min, y_max] = get_bbox_single(pred)
+        pred_box[i,  x_min:x_max, y_min:y_max, 0] = 1
+    pred_box = np.reshape(pred_box, [n, pred_box.shape[1]*pred_box.shape[1]])
+    mask = np.reshape(mask, [n, mask.shape[1] * mask.shape[1]])
+    #cm = confusion_matrix(mask, pred_box)
+    cm = np.zeros((2,2))
+    for i in range(n):
+        cm = cm + confusion_matrix(mask[i,:], pred_box[i,:])
+    cm = cm / n
+    return cm
+
+
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
