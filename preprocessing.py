@@ -149,14 +149,14 @@ def get_ROI(contour_path, shape_out = 32, img_size = 256):
         ROI.append(cv2.resize(roi_single, (shape_out, shape_out), interpolation = cv2.INTER_NEAREST))
     return ROI
 
-def get_cropped(img, y_pred, roi_size = 32, win_size = 100):
+def get_cropped(img, y_pred, roi_size = 32, win_size = 80):
     '''
         Cropped the original image using CNN prediction
         @param:
             img: the original image, shape (N, WIDTH, HEIGHT, 1), default size 256
             y_pred: the prediction of ROI, may be showed as scatter binary image, shape (N, 1, roi_size, roi_size)
             roi_size: the size of y_pred, default 32
-            win_size: the size of window used to crop the original image, default 100
+            win_size: the size of window used to crop the original image, default 80
         @return
             cropped: the cropped image, same format with input img, but with smaller size of win_size
     '''
@@ -168,7 +168,7 @@ def get_cropped(img, y_pred, roi_size = 32, win_size = 100):
         cropped[i, :, :, 0] = img[i, x_min:x_max, y_min:y_max, 0]
     return cropped
 
-def get_bbox_single(pred, roi_size = 32, win_size = 100):
+def get_bbox_single(pred, roi_size = 32, win_size = 80):
     '''
         Compute the bounding box param of the given binary region mask
         This implementation compute the median of x, y as the middle point.
