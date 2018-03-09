@@ -1,4 +1,4 @@
-import dicom, cv2, re
+import pydicom, cv2, re
 import os, fnmatch, sys
 import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
@@ -51,7 +51,7 @@ class Contour(object):
 def read_contour(contour, data_path):
     filename = 'IM-%s-%04d.dcm' % (SAX_SERIES[contour.case], contour.img_no)
     full_path = os.path.join(data_path, contour.case, filename)
-    f = dicom.read_file(full_path)
+    f = pydicom.read_file(full_path)
     img = f.pixel_array.astype('int')
     mask = np.zeros_like(img, dtype='uint8')
     coords = np.loadtxt(contour.ctr_path, delimiter=' ').astype('int')
@@ -149,38 +149,6 @@ def get_ROI(contour_path, shape_out = 32, img_size = 256):
         ROI.append(cv2.resize(roi_single, (shape_out, shape_out), interpolation = cv2.INTER_NEAREST))
     return ROI
 
-def get_cropped(img, y_pred, roi_size = 32, win_size = 80):
-    '''
-        Cropped the original image using CNN prediction
-        @param:
-            img: the original image, shape (N, WIDTH, HEIGHT, 1), default size 256
-            y_pred: the prediction of ROI, may be showed as scatter binary image, shape (N, 1, roi_size, roi_size)
-            roi_size: the size of y_pred, default 32
-            win_size: the size of window used to crop the original image, default 80
-        @return
-            cropped: the cropped image, same format with input img, but with smaller size of win_size
-    '''
-    n = img.shape[0]
-    cropped = np.zeros((n, win_size, win_size, 1))
-    for i in range(y_pred.shape[0]):
-        pred = y_pred[i, 0, :,:]
-        [x_min, x_max, y_min, y_max] = get_bbox_single(pred)
-        cropped[i, :, :, 0] = img[i, x_min:x_max, y_min:y_max, 0]
-    return cropped
 
-def get_bbox_single(pred, roi_size = 32, win_size = 80):
-    '''
-        Compute the bounding box param of the given binary region mask
-        This implementation compute the median of x, y as the middle point.
-    '''
-    ind = np.array(np.where(pred > 0.5))
-    [x_median, y_median] = np.median(region, axis=1)
-    x_median *= 256 / roi_size
-    y_median *= 256 / roi_size
-    x_min = int(max(0, x_median - win_size / 2))
-    y_min = int(max(0, y_median - win_size / 2))
-    x_max = x_min + win_size
-    y_max = y_min + win_size
-    return [x_min, x_max, y_min, y_max]
 
     

@@ -6,6 +6,8 @@ from keras import backend as K
 import os
 from sklearn.metrics import confusion_matrix
 import itertools
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def get_SAX_SERIES():
@@ -111,7 +113,7 @@ def jaccard_coef(y_true, y_pred):
     return float(intersection) / float(union)
 
 
-def get_confusion_matrix_bbox(mask, pred):
+def get_confusion_matrix_bbox(mask, y_pred):
     '''
         Using confusion matrix to evaluate the performance of cropping
         For each mask - pred pair, compute the bbox of pred, regard mask as ground truth, bbox as prediction,
@@ -120,6 +122,7 @@ def get_confusion_matrix_bbox(mask, pred):
     pred_box = np.zeros((mask.shape))
     n = mask.shape[0]
     for i in range(n):
+        pred = y_pred[i, 0, :,:]
         [x_min, x_max, y_min, y_max] = get_bbox_single(pred)
         pred_box[i,  x_min:x_max, y_min:y_max, 0] = 1
     pred_box = np.reshape(pred_box, [n, pred_box.shape[1]*pred_box.shape[1]])
@@ -131,6 +134,39 @@ def get_confusion_matrix_bbox(mask, pred):
     cm = cm / n
     return cm
 
+def get_cropped(img, y_pred, roi_size = 32, win_size = 80):
+    '''
+        Cropped the original image using CNN prediction
+        @param:
+            img: the original image, shape (N, WIDTH, HEIGHT, 1), default size 256
+            y_pred: the prediction of ROI, may be showed as scatter binary image, shape (N, 1, roi_size, roi_size)
+            roi_size: the size of y_pred, default 32
+            win_size: the size of window used to crop the original image, default 80
+        @return
+            cropped: the cropped image, same format with input img, but with smaller size of win_size
+    '''
+    n = img.shape[0]
+    cropped = np.zeros((n, win_size, win_size, 1))
+    for i in range(y_pred.shape[0]):
+        pred = y_pred[i, 0, :,:]
+        [x_min, x_max, y_min, y_max] = get_bbox_single(pred)
+        cropped[i, :, :, 0] = img[i, x_min:x_max, y_min:y_max, 0]
+    return cropped
+
+def get_bbox_single(pred, roi_size = 32, win_size = 80):
+    '''
+        Compute the bounding box param of the given binary region mask
+        This implementation compute the median of x, y as the middle point.
+    '''
+    ind = np.array(np.where(pred > 0.5))
+    [x_median, y_median] = np.median(ind, axis=1)
+    x_median *= 256 / roi_size
+    y_median *= 256 / roi_size
+    x_min = int(max(0, x_median - win_size / 2))
+    y_min = int(max(0, y_median - win_size / 2))
+    x_max = x_min + win_size
+    y_max = y_min + win_size
+    return [x_min, x_max, y_min, y_max]
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
