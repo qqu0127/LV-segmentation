@@ -149,7 +149,7 @@ def get_cropped(img, y_pred, roi_size = 32, win_size = 80):
     cropped = np.zeros((n, win_size, win_size, 1))
     for i in range(y_pred.shape[0]):
         pred = y_pred[i, 0, :,:]
-        [x_min, x_max, y_min, y_max] = get_bbox_single(pred)
+        [x_min, x_max, y_min, y_max] = get_bbox_single(pred, win_size = win_size)
         cropped[i, :, :, 0] = img[i, x_min:x_max, y_min:y_max, 0]
     return cropped
 

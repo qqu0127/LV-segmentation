@@ -41,6 +41,7 @@ class Contour(object):
         match = re.search(r'/([^/]*)/contours-manual/IRCCI-expert/IM-0001-(\d{4})-.*', ctr_path)
         self.case = shrink_case(match.group(1))
         self.img_no = int(match.group(2))
+        self.ctr = np.loadtxt(self.ctr_path, delimiter=' ').astype('int')
     
     def __str__(self):
         return '<Contour for case %s, image %d>' % (self.case, self.img_no)
@@ -94,7 +95,7 @@ def export_all_contours(contours, data_path):
 def prepareDataset(contour_path, img_path):
     contours = map_all_contours(contour_path)
     img, mask = export_all_contours(contours, img_path)
-    return img, mask
+    return img, mask, contours
 
 def reformDataXY(img, ROI, img_size = 64,  mask_size = 32):
     '''
@@ -116,7 +117,7 @@ def reformDataXY(img, ROI, img_size = 64,  mask_size = 32):
 
 
 
-def get_ROI(contour_path, shape_out = 32, img_size = 256):
+def get_ROI(contours, shape_out = 32, img_size = 256):
     '''
         Given the path to the mask, return ROI -- the bounding box with size shape_out
         @param
@@ -126,17 +127,9 @@ def get_ROI(contour_path, shape_out = 32, img_size = 256):
         @return
             ROI: the bounding box computed based on ground truth
     '''
-    contours = [os.path.join(dirpath, f)
-        for dirpath, dirnames, files in os.walk(contour_path)
-        for f in fnmatch.filter(files,
-                        'IM-0001-*-icontour-manual.txt')]
     ROI = []
-    for path in contours:
-        c = []
-        file = open(path, 'r')
-        for line in file:
-            c.append(tuple(map(float, line.split())))
-        c = np.array(c)
+    for i in range(len(contours)):
+        c = contours[i].ctr
         X_min, Y_min = c[:,0].min(), c[:,1].min()
         X_max, Y_max = c[:,0].max(), c[:,1].max()  
         w = X_max - X_min
