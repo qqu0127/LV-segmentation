@@ -8,7 +8,7 @@ from keras import regularizers
 from keras.models import load_model
 from keras.losses import mean_squared_error
 
-def create_baseline_model(input_shape=(64, 64)):
+def create_baseline_model(activation = 'relu', input_shape=(64, 64)):
     model = Sequential()
     model.add(Conv2D(100, (11,11), padding='valid', strides=(1, 1), input_shape=(input_shape[0], input_shape[1], 1)))
     model.add(AveragePooling2D((6,6)))
@@ -17,7 +17,37 @@ def create_baseline_model(input_shape=(64, 64)):
     model.add(Reshape([-1, 32, 32]))
     return model
 
-def create_maxpooling_model(input_shape = (64,64)):
+def create_model_larger(activation = 'relu', input_shape=(64, 64)):
+    """
+    Larger (more filters) convnet model : one convolution, one average pooling and one fully connected layer:
+    :param activation: None if nothing passed, e.g : ReLu, tanh, etc. 
+    :return: Keras model
+    """
+    model = Sequential()
+    model.add(Conv2D(200, (11,11), activation=activation, padding='valid', strides=(1, 1), input_shape=(input_shape[0], input_shape[1], 1)))
+    model.add(AveragePooling2D((6,6)))
+    model.add(Reshape([-1, 16200]))
+    model.add(Dense(1024, activation='sigmoid', kernel_regularizer=regularizers.l2(0.0001)))
+    model.add(Reshape([-1, 32, 32]))
+    return model
+
+def create_model_deeper(activation = 'relu', input_shape=(64, 64)):
+    """
+    Deeper convnet model : two convolutions, two average pooling and one fully connected layer:
+    :param activation: None if nothing passed, e.g : ReLu, tanh, etc.
+    :return: Keras model
+    """
+    model = Sequential()
+    model.add(Conv2D(64, (11,11), activation=activation, padding='valid', strides=(1, 1), input_shape=(input_shape[0], input_shape[1], 1)))
+    model.add(AveragePooling2D((2,2)))
+    model.add(Conv2D(128, (10, 10), activation=activation, padding='valid', strides=(1, 1)))
+    model.add(AveragePooling2D((2,2)))
+    model.add(Reshape([-1, 128*9*9]))
+    model.add(Dense(1024, activation='sigmoid', kernel_regularizer=regularizers.l2(0.0001)))
+    model.add(Reshape([-1, 32, 32]))
+    return model
+
+def create_maxpooling_model(activation = 'relu', input_shape = (64,64)):
     """
     Simple convnet model with max pooling: one convolution, one max pooling and one fully connected layer
     :param activation: None if nothing passed, e.g : ReLu, tanh, etc.
@@ -66,7 +96,33 @@ def run_cnn(data, train = False):
     del model
     return y_pred
 
+def run(X, Y, model, X_to_pred=None, history=False, verbose=0, activation=None, epochs=20, data_augm=False):
+    if model == 'simple':
+        m = create_baseline_model(activation = activation)
+    elif model == 'larger':
+        m = create_model_larger(activation=activation)
+    elif model == 'deeper':
+        m = create_model_deeper(activation=activation)
+    elif model == 'maxpooling':
+        m = create_model_maxpooling(activation=activation)
 
+    m.compile(loss='mean_squared_error',
+              optimizer='adam',
+              metrics=['accuracy'])
+    if verbose > 0:
+        print('Size for each layer :\nLayer, Input Size, Output Size')
+        for p in m.layers:
+            print(p.name.title(), p.input_shape, p.output_shape)
+    h = training(m, X, Y, batch_size=16, epochs=epochs, data_augm=data_augm)
+
+    if not X_to_pred:
+        X_to_pred = X
+    y_pred = m.predict(X_to_pred, batch_size=16)
+    
+    if history:
+        return h, m
+    else:
+        return m
 
 
 def training(model, X, Y, batch_size=16, epochs= 10, data_augm=False):
