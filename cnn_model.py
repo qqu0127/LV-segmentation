@@ -63,6 +63,7 @@ def run_cnn(data, train = False):
         except IOError as e:
             print "I/O Error ({0}): {1}".format(e.errno, e.strerror)
         y_pred = model.predict(X_test, batch_size = 16)
+    del model
     return y_pred
 
 
