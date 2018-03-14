@@ -134,7 +134,7 @@ def get_confusion_matrix_bbox(mask, y_pred):
     cm = cm / n
     return cm
 
-def get_cropped(img, y_pred, roi_size = 32, win_size = 80):
+def get_cropped(img, y_pred, roi_size = 32, win_size = 100):
     '''
         Cropped the original image using CNN prediction
         @param:
@@ -153,7 +153,7 @@ def get_cropped(img, y_pred, roi_size = 32, win_size = 80):
         cropped[i, :, :, 0] = img[i, x_min:x_max, y_min:y_max, 0]
     return cropped
 
-def get_bbox_single(pred, roi_size = 32, win_size = 80):
+def get_bbox_single(pred, roi_size = 32, win_size = 100):
     '''
         Compute the bounding box param of the given binary region mask
         This implementation compute the median of x, y as the middle point.
