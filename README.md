@@ -4,7 +4,7 @@ UCLA-CS269 Project -- Cardiac MR Left Ventricle Segmentation Challenge.
 ### Abstraction
   
   
-### Members:
+### Members
 Qi Qu. 
 Jingxi Yu. 
 Changyu Yan. 
