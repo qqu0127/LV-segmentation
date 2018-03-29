@@ -13,6 +13,7 @@ Sha Liu
 
 ### Dataset
 Data could be downloaded on this site after registering http://smial.sri.utoronto.ca/LV_Challenge/Home.html. 
+All data is expected to be released to ../Data/
 
 ### Codes 
 ROI_detection.ipynb shows the process of ROI detection and also how to loads and prepare the data in this challenge.  
