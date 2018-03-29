@@ -14,4 +14,7 @@ Sha Liu
 Data could be downloaded on this site after registering http://smial.sri.utoronto.ca/LV_Challenge/Home.html. 
 
 ### Codes 
-demo.ipynb shows how to loads and prepare the data in this challenge. 
+ROI_detection.ipynb shows the process of ROI detection and also how to loads and prepare the data in this challenge.  
+StackedAE.ipynb && PCA_autoencoder.ipynb shows the process of shape prior inference.  
+SAE+ActiveContour.ipynb shows the last step of computing the contour.  
+
